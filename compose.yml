@@ -1,0 +1,91 @@
+services:  # название структуры, в которую включены контейнеры + сеть
+  nginx: # имя сервиса
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    container_name: nginx_container
+    ports:
+      - "80:80"
+    volumes:
+      - ./siteaboutme/static:/app/www/easysite-docker/static:ro
+    depends_on: # зависимости, после которых стартует контейнер
+      - webflask
+      - adminer
+    networks:
+      - dbnet
+
+
+  postgres:  # имя сервиса
+    image: postgres:17-alpine # имя образа, на основе которого создается контейнер
+    container_name: psgr-container   # имя контейнера
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}   # в таком виде указываются переменные среды
+      - POSTGRES_USER=${DATABASE_USERNAME} # описываются в .env
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dbnet
+
+  adminer:
+    image: adminer
+    container_name: adminer_container
+    ports:
+      - "8080"       # "127.0.0.1:8080:8080" - пример прямого проброса портов
+    links:
+      - "postgres:db"   # название сервиса, а не название контейнера!
+    networks:
+      - dbnet
+    depends_on:
+      - postgres
+
+  webflask:
+    build:
+      context: ./siteaboutme # путь к докер файл
+      dockerfile: Dockerfile    # имя docker файла
+    image: flask-image # явно указываем, как должен называться образ
+    container_name: flasksite_container
+    restart: always # в случае остановки контейнера, он будет пытаться перезапуститься
+    env_file:
+      .env
+    expose:
+      - "4000"
+    networks:
+      - dbnet
+    ports:
+      - "5000" # явный проброс портов "127.0.0.1:8000:4000" # так как у site.py явно указан порт 4000
+    volumes:
+      - ./siteaboutme:/app/www/easysite-docker
+
+    #environment:
+     # - FLASK_ENV=production
+      #- DATABASE_URL=postgresql://user:password@postgres:5432/mydb
+
+    depends_on:
+      - postgres
+
+
+# Прописываем сеть
+networks:
+  dbnet:
+    driver: bridge
+# указываем создания тома
+volumes:
+  postgres-data:
+
+
+
+#Docker
+  #docker run -d --rm --name psgr --network dbnet
+  #-e POSTGRES_DB=mydata -e POSTGRES_USER=postgres
+  #-e POSTGRES_PASSWORD=1234
+  #-v postgres-data:/var/lib/postgresql/data
+  #postgres:17-alpine
+
+#Adminer
+  #docker run --rm -d --network dbnet
+  #--link psgr:db -p 8080:8080 adminer
+
+#Flask
+  #docker run --rm --network dbnet --link psgr:dbps
+  #-p 8000:4000 -v $(PWD)/flaskprj:/app -d flask-back

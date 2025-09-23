@@ -1,0 +1,14 @@
+# ignore virtual environment
+venv/
+
+# ignore private data
+.env
+
+# ignore logs
+*.log
+
+# ignore docker-volumes
+
+# Docker volumes
+postgres-data/
+
