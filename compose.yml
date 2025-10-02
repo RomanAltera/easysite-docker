@@ -31,7 +31,7 @@ services:  # название структуры, в которую включе
     image: adminer
     container_name: adminer_container
     ports:
-      - "8080"       # "127.0.0.1:8080:8080" - пример прямого проброса портов
+      - "127.0.0.1:8080:8080"       # "127.0.0.1:8080:8080" - пример прямого проброса портов
     links:
       - "postgres:db"   # название сервиса, а не название контейнера!
     networks:
@@ -41,7 +41,7 @@ services:  # название структуры, в которую включе
 
   webflask:
     build:
-      context: ./siteaboutme # путь к докер файл
+      context: ./siteaboutme # путь к докер файлу
       dockerfile: Dockerfile    # имя docker файла
     image: flask-image # явно указываем, как должен называться образ
     container_name: flasksite_container
@@ -53,14 +53,9 @@ services:  # название структуры, в которую включе
     networks:
       - dbnet
     ports:
-      - "5000" # явный проброс портов "127.0.0.1:8000:4000" # так как у site.py явно указан порт 4000
+      - "4000:4000" # явный проброс портов "127.0.0.1:8000:4000" # так как у site.py явно указан порт 4000
     volumes:
       - ./siteaboutme:/app/www/easysite-docker
-
-    #environment:
-     # - FLASK_ENV=production
-      #- DATABASE_URL=postgresql://user:password@postgres:5432/mydb
-
     depends_on:
       - postgres
 
